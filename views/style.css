@@ -1,0 +1,13 @@
+nav ul {
+  display: -webkit-box;
+  display: -moz-box;
+  width: 100%;
+  padding: 0%;
+  list-style: none;
+  text-align: center;
+}
+
+nav ul li {
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+}
