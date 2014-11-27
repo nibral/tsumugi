@@ -27,12 +27,16 @@ var checkSchedule = function() {
             nowDay++;
             nowWday = (nowWday == 6) ? 0 : nowWday + 1;
         }
+      
+        if(hour >= 24) {
+          nowDay--;
+        }
 
         var scheduledTime = new time.Date(nowYear, nowMonth, nowDay, hour, minute, 0, 0, timezone);
         var diff = Math.abs(scheduledTime - nowTime) / 1000;
         var hit_time = diff < 30;
         var hit_wday = (wday == nowWday);
-       
+      
         // call recorder function
         if(schedules[i].record && hit_time && hit_wday) {
             var filename = '[' + nowYear + (nowMonth + 1) + nowDay + '][' + schedules[i].mc + ']' + schedules[i].title;

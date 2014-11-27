@@ -13,7 +13,7 @@ app.get('/player/:path', router.player);
 
 var scheduler = require('./scheduler');
 var recorder = require('./recorder');
-var cronPattern = '45 * * * * *';
+var cronPattern = '45 29,59 * * * *';
 scheduler.start(cronPattern, recorder.record);
 
 var server = app.listen(port, function() {
