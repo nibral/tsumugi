@@ -34,12 +34,19 @@ var checkSchedule = function() {
 
         var scheduledTime = new time.Date(nowYear, nowMonth, nowDay, hour, minute, 0, 0, timezone);
         var diff = Math.abs(scheduledTime - nowTime) / 1000;
-        var hit_time = diff < 30;
-        var hit_wday = (wday == nowWday);
+        var isHitTime = diff < 30;
+        var isHitWday = (wday == nowWday);
       
         // call recorder function
-        if(schedules[i].record && hit_time && hit_wday) {
-            var filename = '[' + nowYear + (nowMonth + 1) + nowDay + '][' + schedules[i].mc + ']' + schedules[i].title;
+        if(schedules[i].record && isHitTime && isHitWday) {
+            var filename = '['
+                + nowYear
+                + ('0' + String(nowMonth + 1)).substr(-2)
+                + ('0' + String(nowDay)).substr(-2)
+                + ']['
+                + schedules[i].mc
+                + ']'
+                + schedules[i].title;
             filename = filename.split(' ').join('_');
             recorder(filename, schedules[i].length);
         }

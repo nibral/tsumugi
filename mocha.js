@@ -7,7 +7,8 @@ app.use(express.static(__dirname + '/streams'));
 app.set('view engine', 'jade');
 app.set('views', __dirname + '/views');
 
-var router = require('./routes');app.get('/', router.index);
+var router = require('./routes');
+app.get('/', router.index);
 app.get('/:page', router.page);
 app.get('/player/:path', router.player);
 
