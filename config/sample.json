@@ -3,5 +3,5 @@
     "scheduleFilename": "schedule.json",
     "rtmpdump": "/usr/local/bin/rtmpdump",
     "ffmpeg": "/usr/local/bin/ffmpeg",
-    "outputDir": "/home/username/www/mocha/streams"
+    "outputDir": "/path/to/mocha/public/streams"
 }
