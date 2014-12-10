@@ -4,10 +4,3 @@
 # node module
 node_modules
 
-# recorded streams
-streams/*
-!streams/.gitkeep
-
-# config file
-config/default.json
-

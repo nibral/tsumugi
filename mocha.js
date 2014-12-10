@@ -3,7 +3,7 @@ var port = config.port;
 
 var express = require('express');
 var app = express();
-app.use(express.static(__dirname + '/streams'));
+app.use(express.static(__dirname + '/public'));
 app.set('view engine', 'jade');
 app.set('views', __dirname + '/views');
 

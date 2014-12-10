@@ -1,4 +1,6 @@
 var fs = require('fs');
+var config = require('config');
+var outputDir = config.outputDir;
 
 var getWeekNumber = function(date) {
   var year = date.getFullYear();
@@ -32,7 +34,7 @@ var getWeekNumber = function(date) {
 }
 
 var enumerateRecFile = function(callback) {
-  fs.readdir('./streams', function(err, files) {
+  fs.readdir(outputDir, function(err, files) {
     if(err) {
       throw err;
     }
