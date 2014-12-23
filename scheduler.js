@@ -27,10 +27,10 @@ var checkSchedule = function() {
             nowDay++;
             nowWday = (nowWday == 6) ? 0 : nowWday + 1;
         }
-      
-        if(hour >= 24) {
-          nowDay--;
-          nowWday--;
+
+        if(hour > 24) {
+            nowDay--;
+            nowWday--;
         }
 
         var scheduledTime = new time.Date(nowYear, nowMonth, nowDay, hour, minute, 0, 0, timezone);
