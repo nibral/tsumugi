@@ -1,0 +1,10 @@
+# backup file
+*~
+
+# node modules
+node_modules
+
+# media files (for test)
+*.mp4
+*.m4a
+
