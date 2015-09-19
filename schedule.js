@@ -63,7 +63,7 @@ http.get(url, function (res) {
                     rp = rp.replace(/\n/g, '').replace(/[\s]*/g, '');
 
                     if (time && title && rp) {
-                        programs[day][time] = { title: title, rp: rp };
+                        programs[day][time] = { title: title, rp: rp, length: rowspan * 30 };
                     }
                 }
 
