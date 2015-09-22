@@ -1,5 +1,4 @@
-var scheduler = require('./schedule');
+var scheduler = require('./bin/schedule');
+var recorder = require('./bin/recorder');
 
-scheduler.getTimeTable(function (timetable) {
-    console.log(JSON.stringify(timetable, null, '    '));
-});
+scheduler.start(recorder.record);
