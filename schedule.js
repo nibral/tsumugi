@@ -65,9 +65,11 @@ exports.getTimeTable = function (callback) {
                     rowskip[i]--;
                 }
             });
+
+            // コールバックに番組表を渡す
+            callback(programs);
+        } else {
+            console.error('Failed to get timetable: ' + res.statusCode);
         }
-        
-        // コールバックに番組表を渡す
-        callback(programs);
     });
 }
