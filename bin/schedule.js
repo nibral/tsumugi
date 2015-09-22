@@ -1,11 +1,14 @@
-var url = 'http://www.agqr.jp/timetable/streaming.php';
-
 var request = require('request');
 var cheerio = require('cheerio');
+var CronJob = require('cron').CronJob;
+
+var timetableUrl = 'http://www.agqr.jp/timetable/streaming.php';
+var timezone = 'Asia/Tokyo';
+var recordProgramJob;
 
 // 番組表取得
 exports.getTimeTable = function (callback) {
-    request(url, function (err, res, body) {
+    request(timetableUrl, function (err, res, body) {
         if (!err && res.statusCode == 200) {
             // 元データのtrタグがおかしいので修正
             // 10時:tr開始タグが1つ余計
@@ -72,4 +75,22 @@ exports.getTimeTable = function (callback) {
             console.error('Failed to get timetable: ' + res.statusCode);
         }
     });
+}
+
+// 番組情報取得
+exports.getNextProgram = function () {
+    // stub
+    return null;
+}
+
+// スケジューラ起動
+exports.start = function () {
+    // stub
+}
+
+// スケジューラ停止
+exports.stop = function () {
+    if (!recordProgramJob) {
+        recordProgramJob.stop();
+    }
 }

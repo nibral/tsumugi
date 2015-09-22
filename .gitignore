@@ -6,5 +6,7 @@ node_modules
 
 # media files (for test)
 *.mp4
-*.m4a
 
+# recorded files
+public/streams/*
+!.gitkeep
