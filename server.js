@@ -1,4 +1,5 @@
 var scheduler = require('./bin/schedule');
-var recorder = require('./bin/recorder');
 
-scheduler.start(recorder.record);
+scheduler.start(function (info) {
+    console.log(info);
+});
