@@ -89,7 +89,14 @@ var getNextProgram = function () {
     var nextHour = next.getHours();
     var nextMinute = ('00' + next.getMinutes()).slice(-2);
 
-    return timetable[nextDay][nextHour + ':' + nextMinute];
+    // 番組検索
+    var programInfo = timetable[nextDay][nextHour + ':' + nextMinute];
+    if (programInfo) {
+        programInfo['startat'] = next.setSeconds(0, 0);
+        return programInfo;
+    } else {
+        return null;
+    }
 }
 
 // スケジューラ起動
@@ -105,13 +112,12 @@ exports.start = function (onRecord) {
         updateTimetableJob = new CronJob('0 0 5 * * 1', function () {
             getTimeTable(function (newTimetable) {
                 timetable = newTimetable;
-                console.log('Update timetable:');
             });
         }, null, true, timezone);
             
         // 番組表にあるものを録画
         // チェックは毎時29分と59分
-        recordProgramJob = new CronJob('*/10 * * * * *', function () {
+        recordProgramJob = new CronJob('50 29,59 * * * *', function () {
             var programInfo = getNextProgram();
             if (programInfo) {
                 onRecord(programInfo);

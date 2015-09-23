@@ -8,4 +8,6 @@ exports.record = function (programInfo) {
     // stub
     console.log('record:');
     console.log(programInfo);
+    var time = new Date(programInfo['startat']);
+    console.log(time.toString());
 }
