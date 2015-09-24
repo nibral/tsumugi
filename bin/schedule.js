@@ -85,7 +85,6 @@ var getNextProgram = function () {
     // 次枠の開始時間を計算
     // (30秒後の曜日,時,分を使う)
     var now = new Date();
-    now = new Date(2015, 8, 23, 0, 59, 50, 0);
     var next = new Date(now.getTime() + 30 * 1000);
     var nextDay = (now.getDay() == 0) ? 6 : now.getDay() - 1;
     var nextHour = next.getHours();
@@ -119,7 +118,7 @@ exports.start = function (onComplete) {
             
         // 番組表にあるものを録画
         // チェックは毎時29分と59分
-        recordProgramJob = new CronJob('50 29,59 * * * *', function () {
+        recordProgramJob = new CronJob('45 29,59 * * * *', function () {
             var programInfo = getNextProgram();
             if (programInfo) {
                 recorder.record(programInfo, onComplete);

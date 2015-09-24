@@ -23,7 +23,7 @@ var formatDate = function (date, format) {
 
 // 録画
 exports.record = function (programInfo, onComplete) {
-    var startAt = new Date(programInfo['startAt']);
+    var startAt = new Date(programInfo.startAt);
     var datetime = formatDate(startAt, 'YYYYMMDD_hhmmss');
     
     // 配信URL取得
@@ -32,7 +32,7 @@ exports.record = function (programInfo, onComplete) {
             // XML解析
             parseString(body, function (err, result) {
                 if (err) {
-                    console.log(err);
+                    console.error(err);
                 }
 
                 var serverinfo = result.ag.serverlist[0].serverinfo[0];
