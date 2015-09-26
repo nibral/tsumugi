@@ -1,8 +1,9 @@
-var streamListUrl = 'http://www.uniqueradio.jp/agplayerf/getfmsListHD.php';
-
 var child_process = require('child_process');
-var request = require('request');
-var parseString = require('xml2js').parseString;
+
+// デバック用ログ出力
+var print = function (who, where, what) {
+    console.log(who + ':' + where + ':' + what);
+}
 
 // 日付のフォーマット
 var formatDate = function (date, format) {
@@ -20,71 +21,70 @@ var formatDate = function (date, format) {
     return format;
 };
 
-// 録画
-exports.record = function (programInfo, onComplete) {
+// エンコード
+var encode = function (recordedFilePath, programInfo, callback) {
     var startAt = new Date(programInfo.startAt);
     var datetime = formatDate(startAt, 'YYYYMMDD_hhmmss');
-    
-    // 配信URL取得
-    request(streamListUrl, function (err, res, body) {
-        if (!err && res.statusCode == 200) {
-            // XML解析
-            parseString(body, function (err, result) {
-                if (err) {
-                    console.error(err);
-                }
+    var videoFilePath = datetime + '_video.mp4';
+    var audioFilePath = datetime + '_audio.mp4';
+    var thumbnailFilePath = datetime + '_thumbnail.jpg';
 
-                var serverinfo = result.ag.serverlist[0].serverinfo[0];
-                var server = serverinfo.server[0].match(/^.*(rtmp.*)$/)[1];
-                var app = serverinfo.app[0];
-                var stream = serverinfo.stream[0];
-                var streamUrl = server + '/' + app + '/' + stream;
-
-                // 録画
-                var videoFilename = datetime + '_video.mp4';
-                var audioFilename = datetime + '_audio.mp4';
-                var ffmpeg = child_process.spawn('ffmpeg', [
-                    '-y',
-                    '-re',
-                    '-t', programInfo['length'] * 60,
-                    '-i', streamUrl,
-                // video
-                    '-vcodec', 'copy',
-                    '-acodec', 'libfdk_aac',
-                    '-ac', '1',
-                    '-ab', '32k',
-                    '-ar', '24000',
-                    videoFilename,
-                // audio
-                    '-vn',
-                    '-acodec', 'libfdk_aac',
-                    '-ac', '1',
-                    '-ab', '32k',
-                    '-ar', '24000',
-                    audioFilename
-                ]);
-                ffmpeg.on('close', function () {
-                    var thumbnailFilename = datetime + '_thumbnail.jpg';
-                    var ffmpeg2 = child_process.spawn('ffmpeg', [
-                    // thumbnail
-                        '-ss', '20',
-                        '-i', videoFilename,
-                        '-vframes', '1',
-                        '-f', 'image2',
-                        '-s', '320x180',
-                        thumbnailFilename
-                    ]);
-                    ffmpeg2.on('close', function () {
-                        // 後処理呼び出し
-                        programInfo['video'] = videoFilename;
-                        programInfo['audio'] = audioFilename;
-                        programInfo['thumbnail'] = thumbnailFilename;
-                        onComplete(programInfo);
-                    });
-                });
-            });
-        } else {
-            console.error('Failed to get stream url: ' + res.statusCode);
-        }
+    var ffmpeg = child_process.spawn('ffmpeg', [
+        '-y',
+        '-i', recordedFilePath,
+    // video
+        '-vcodec', 'copy',
+        '-acodec', 'libfdk_aac',
+        '-ac', '1',
+        '-ab', '32k',
+        '-ar', '24000',
+        videoFilePath,
+    // audio
+        '-vn',
+        '-acodec', 'libfdk_aac',
+        '-ac', '1',
+        '-ab', '32k',
+        '-ar', '24000',
+        audioFilePath,
+    //thumbnail
+        '-ss', '20',
+        '-vframes', '1',
+        '-f', 'image2',
+        '-s', '320x180',
+        thumbnailFilePath
+    ]);
+    ffmpeg.stdout.on('data', function (data) {
+        print('ffmpeg', 'stdout', data);
+    });
+    ffmpeg.stderr.on('data', function (data) {
+        print('ffmpeg', 'stderr', data);
+    });
+    ffmpeg.on('close', function () {
+        // 後処理呼び出し
+        programInfo['video'] = videoFilePath;
+        programInfo['audio'] = audioFilePath;
+        programInfo['thumbnail'] = thumbnailFilePath;
+        callback(programInfo);
     });
 }
+
+// 録画
+exports.record = function (programInfo, callback) {
+    var flvPath = 'temp.flv';
+    
+    // rtmpdump呼び出し
+    var rtmpdump = child_process.spawn('rtmpdump', [
+        // stub
+    ]);
+    rtmpdump.stdout.on('data', function (data) {
+        print('rtmpdump', 'stdout', data);
+    });
+    rtmpdump.stderr.on('data', function (data) {
+        print('rtmpdump', 'stderr', data);
+    });
+    rtmpdump.on('close', function () {
+        // エンコード
+        encode(flvPath, programInfo, callback);
+    });
+}
+    

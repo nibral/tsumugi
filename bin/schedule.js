@@ -1,41 +1,60 @@
 var request = require('request');
 var cheerio = require('cheerio');
 var CronJob = require('cron').CronJob;
+var parseString = require('xml2js').parseString;
 var recorder = require('./recorder');
 
 var timetableUrl = 'http://www.agqr.jp/timetable/streaming.php';
+var streamListUrl = 'http://www.uniqueradio.jp/agplayerf/getfmsListHD.php';
+
 var timezone = 'Asia/Tokyo';
 var updateTimetableJob;
 var recordProgramJob;
 var timetable;
 
+// 番組表の形式
+//  [day]{ time: { title, rp } }
+// プロパティ
+//  day: 曜日,0(月曜)...6(日曜)
+//  time: 時間('hh:mm')
+//  title: 番組名
+//  rp: 出演者
+
+// 番組情報の形式
+//  { title, rp, length, startAt, video, audio, thumbnail }
+// プロパティ
+//  title: 番組名
+//  rp: 出演者
+//  length: 長さ(min)
+//  startAt: 開始時間(unixtime(ms))
+//  video,audio,thumbnail: エンコード後のファイル名
+
 // 番組表取得
 var getTimeTable = function (callback) {
-    request(timetableUrl, function (err, res, body) {
-        if (!err && res.statusCode == 200) {
+    request(timetableUrl, function (timetableError, timetableResponse, timetableBody) {
+        if (!timetableError && timetableResponse.statusCode == 200) {
             // 元データのtrタグがおかしいので修正
             // 10時:tr開始タグが1つ余計
-            body = body.replace(
+            timetableBody = timetableBody.replace(
                 /<\/tr>[\s]*<tr>[\s]*<tr>/g,
                 '</tr>\n<tr>'
                 );
             // 20時と21時:tr開始タグが足りない
-            body = body.replace(
+            timetableBody = timetableBody.replace(
                 /<\/tr>[\s]*<th class="time3" rowspan="2">2/g,
                 '</tr>\n<tr>\n<th class="time3" rowspan="2">2'
                 );
 
             // 番組表
-            // 0:月曜 6:日曜
-            var programs = [];
+            var timetable = [];
             for (var i = 0; i < 7; i++) {
-                programs[programs.length] = {};
+                timetable[timetable.length] = {};
             }
             // 前枠継続フラグ
             var rowskip = [0, 0, 0, 0, 0, 0, 0];    
 
             // 30分ごとの枠
-            var $ = cheerio.load(body);
+            var $ = cheerio.load(timetableBody);
             $('.schedule-ag > table > tbody > tr').each(function () {
                 // 各曜日
                 var day = 0;
@@ -59,7 +78,7 @@ var getTimeTable = function (callback) {
                         rp = rp.replace(/\n/g, '').replace(/[\s]*/g, '');
 
                         if (time && title && rp) {
-                            programs[day][time] = { title: title, rp: rp, length: rowspan * 30 };
+                            timetable[day][time] = { title: title, rp: rp, length: rowspan * 30 };
                         }
                     }
 
@@ -73,15 +92,15 @@ var getTimeTable = function (callback) {
             });
 
             // コールバックに番組表を渡す
-            callback(programs);
+            callback(timetable);
         } else {
-            console.error('Failed to get timetable: ' + res.statusCode);
+            console.error('Failed to get timetable: ' + timetableResponse.statusCode);
         }
     });
 }
 
 // 番組情報取得
-var getNextProgram = function () {
+var getNextProgram = function (callback) {
     // 次枠の開始時間を計算
     // (30秒後の曜日,時,分を使う)
     var now = new Date();
@@ -90,18 +109,42 @@ var getNextProgram = function () {
     var nextHour = next.getHours();
     var nextMinute = ('00' + next.getMinutes()).slice(-2);
 
-    // 番組検索
+    // 次枠で始まる番組があればコールバック呼び出し
     var programInfo = timetable[nextDay][nextHour + ':' + nextMinute];
     if (programInfo) {
         programInfo['startAt'] = next.setSeconds(0, 0);
-        return programInfo;
-    } else {
-        return null;
+        callback(programInfo);
     }
+    // ないときは黙って終了
+}
+
+// 配信URL取得
+var getStreamUrl = function (callback) {
+    // 配信URL取得
+    request(streamListUrl, function (urlError, urlResponse, urlBody) {
+        if (!urlError && urlResponse.statusCode == 200) {
+            // XML解析
+            parseString(urlBody, function (parseError, parseResult) {
+                if (parseError) {
+                    console.error(parseError);
+                }
+
+                // 先頭のURLを返す
+                var serverinfo = parseResult.ag.serverlist[0].serverinfo[0];
+                var server = serverinfo.server[0].match(/^.*(rtmp.*)$/)[1];
+                var app = serverinfo.app[0];
+                var stream = serverinfo.stream[0];
+                var streamUrl = server + '/' + app + '/' + stream;
+                callback(streamUrl);
+            });
+        } else {
+            console.error('Failed to get stream url: ' + urlResponse.statusCode);
+        }
+    });
 }
 
 // スケジューラ起動
-exports.start = function (onComplete) {
+exports.start = function (callback) {
     getTimeTable(function (nowTimetable) {
         // 番組表が取得できたらジョブ登録
         timetable = nowTimetable;
@@ -119,10 +162,11 @@ exports.start = function (onComplete) {
         // 番組表にあるものを録画
         // チェックは毎時29分と59分
         recordProgramJob = new CronJob('45 29,59 * * * *', function () {
-            var programInfo = getNextProgram();
-            if (programInfo) {
-                recorder.record(programInfo, onComplete);
-            }
+            getNextProgram(function (programInfo) {
+                getStreamUrl(function (streamUrl) {
+                    recorder.record(streamUrl, programInfo, callback);
+                });
+            });
         }, null, true, timezone);
     });
 }
