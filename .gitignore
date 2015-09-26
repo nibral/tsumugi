@@ -4,12 +4,10 @@
 # node modules
 node_modules
 
-# media files (for test)
+# media files
 *.mp4
 
 # recorded files
 public/streams/*
 !.gitkeep
 
-# config file
-config.json

@@ -1,4 +1,0 @@
-{
-    "ffmpeg": "/path/to/ffmpeg"
-    "outputDir": "/path/to/sushi/public/streams/"
-}

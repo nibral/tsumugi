@@ -1,6 +1,5 @@
 var streamListUrl = 'http://www.uniqueradio.jp/agplayerf/getfmsListHD.php';
 
-var config = require('../config.json');
 var child_process = require('child_process');
 var request = require('request');
 var parseString = require('xml2js').parseString;
@@ -42,9 +41,9 @@ exports.record = function (programInfo, onComplete) {
                 var streamUrl = server + '/' + app + '/' + stream;
 
                 // 録画
-                var videoFilename = config.outputDir + datetime + '_video.mp4';
-                var audioFilename = config.outputDir + datetime + '_audio.mp4';
-                var ffmpeg = child_process.spawn(config.ffmpeg, [
+                var videoFilename = datetime + '_video.mp4';
+                var audioFilename = datetime + '_audio.mp4';
+                var ffmpeg = child_process.spawn('ffmpeg', [
                     '-y',
                     '-re',
                     '-t', programInfo['length'] * 60,
@@ -65,8 +64,8 @@ exports.record = function (programInfo, onComplete) {
                     audioFilename
                 ]);
                 ffmpeg.on('close', function () {
-                    var thumbnailFilename = config.outputDir + datetime + '_thumbnail.jpg';
-                    var ffmpeg2 = child_process.spawn(config.ffmpeg, [
+                    var thumbnailFilename = datetime + '_thumbnail.jpg';
+                    var ffmpeg2 = child_process.spawn('ffmpeg', [
                     // thumbnail
                         '-ss', '20',
                         '-i', videoFilename,
