@@ -143,6 +143,7 @@ var getStreamUrl = function (callback) {
     });
 }
 
+
 // スケジューラ起動
 exports.start = function (callback) {
     getTimeTable(function (nowTimetable) {
@@ -164,7 +165,16 @@ exports.start = function (callback) {
         recordProgramJob = new CronJob('45 29,59 * * * *', function () {
             getNextProgram(function (programInfo) {
                 getStreamUrl(function (streamUrl) {
-                    recorder.record(streamUrl, programInfo, callback);
+                    recorder.record(
+                        streamUrl,
+                        programInfo.length * 60 + 15,
+                        new Date(programInfo.startAt),
+                        function (filePaths) {
+                            programInfo['video'] = filePaths.video;
+                            programInfo['audio'] = filePaths.audio;
+                            programInfo['thumbnail'] = filePaths.thumbnail;
+                            callback(programInfo);
+                        });
                 });
             });
         }, null, true, timezone);

@@ -1,8 +1,12 @@
 var child_process = require('child_process');
+var fs = require('fs');
+var path = require('path');
 
 // デバック用ログ出力
 var print = function (who, where, what) {
-    console.log(who + ':' + where + ':' + what);
+    if (process.env.NODE_ENV !== 'production') {
+        console.log(who + ':' + where + ':' + what);
+    }
 }
 
 // 日付のフォーマット
@@ -22,16 +26,17 @@ var formatDate = function (date, format) {
 };
 
 // エンコード
-var encode = function (recordedFilePath, programInfo, callback) {
-    var startAt = new Date(programInfo.startAt);
-    var datetime = formatDate(startAt, 'YYYYMMDD_hhmmss');
-    var videoFilePath = datetime + '_video.mp4';
-    var audioFilePath = datetime + '_audio.mp4';
-    var thumbnailFilePath = datetime + '_thumbnail.jpg';
+var encode = function (flvFilePath, callback) {
+    var dir = path.dirname(flvFilePath);
+    var base = path.basename(flvFilePath, '.flv');
+    var videoFilePath = dir + path.sep + base + '_video.mp4';
+    var audioFilePath = dir + path.sep + base + '_audio.mp4';
+    var thumbnailFilePath = dir + path.sep + base + '_thumbnail.jpg';
 
+    print('encode', 'file', videoFilePath);
     var ffmpeg = child_process.spawn('ffmpeg', [
         '-y',
-        '-i', recordedFilePath,
+        '-i', flvFilePath,
     // video
         '-vcodec', 'copy',
         '-acodec', 'libfdk_aac',
@@ -60,21 +65,30 @@ var encode = function (recordedFilePath, programInfo, callback) {
         print('ffmpeg', 'stderr', data);
     });
     ffmpeg.on('close', function () {
-        // 後処理呼び出し
-        programInfo['video'] = videoFilePath;
-        programInfo['audio'] = audioFilePath;
-        programInfo['thumbnail'] = thumbnailFilePath;
-        callback(programInfo);
+        // flvを削除してコールバック呼び出し
+        fs.unlink(flvFilePath, function (error) {
+            if (error) { throw error; }
+        });
+        callback({
+            'video': videoFilePath,
+            'audio': audioFilePath,
+            'thumbnail': thumbnailFilePath
+        });
     });
 }
 
 // 録画
-exports.record = function (programInfo, callback) {
-    var flvPath = 'temp.flv';
+exports.record = function (streamUrl, length, startAt, callback) {
+    var datetime = formatDate(startAt, 'YYYYMMDD_hhmmss');
+    var flvFilePath = path.resolve(datetime + 'flv');
     
     // rtmpdump呼び出し
+    print('recode', 'file', flvFilePath);
     var rtmpdump = child_process.spawn('rtmpdump', [
-        // stub
+        '--rtmp', streamUrl,
+        '--live',
+        '--stop', length,
+        '--flv', flvFilePath
     ]);
     rtmpdump.stdout.on('data', function (data) {
         print('rtmpdump', 'stdout', data);
@@ -84,7 +98,7 @@ exports.record = function (programInfo, callback) {
     });
     rtmpdump.on('close', function () {
         // エンコード
-        encode(flvPath, programInfo, callback);
+        encode(flvFilePath, callback);
     });
 }
     
