@@ -15,7 +15,7 @@ var timetable;
 // 番組表の形式
 //  [day]{ time: { title, rp } }
 // プロパティ
-//  day: 曜日,0(月曜)...6(日曜)
+//  day: 曜日,0(日曜)...6(土曜)
 //  time: 時間('hh:mm')
 //  title: 番組名
 //  rp: 出演者
@@ -57,12 +57,13 @@ var getTimeTable = function (callback) {
             var $ = cheerio.load(timetableBody);
             $('.schedule-ag > table > tbody > tr').each(function () {
                 // 各曜日
-                var day = 0;
+                var day = 1;
                 $(this).children('td').each(function () {
                     // 前枠が継続する列をスキップ
                     while (rowskip[day] > 0) {
                         day++;
                     }
+                    // 番組の枠数(30分単位)
                     // rowspanが未定義(=30分番組)なら1
                     var rowspan = $(this).attr('rowspan');
                     rowskip[day] = rowspan = rowspan ? rowspan : 1;
@@ -76,13 +77,17 @@ var getTimeTable = function (callback) {
                         title = title.replace(/\n/g, '').replace(/[\s]*/g, '');
                         var rp = $(this).children('.rp').text();
                         rp = rp.replace(/\n/g, '').replace(/[\s]*/g, '');
+                        
+                        // 0:00～5:00は次の曜日
+                        var hour = (time.split(':'))[0];
+                        var startDay = ((hour <= 5) ? day + 1 : day) % 7;
 
                         if (time && title && rp) {
-                            timetable[day][time] = { title: title, rp: rp, length: rowspan * 30 };
+                            timetable[startDay][time] = { title: title, rp: rp, length: rowspan * 30 };
                         }
                     }
 
-                    day++;
+                    day = (day == 6) ? 0 : day + 1;
                 });
             
                 // 次枠へ
@@ -105,7 +110,7 @@ var getNextProgram = function (callback) {
     // (30秒後の曜日,時,分を使う)
     var now = new Date();
     var next = new Date(now.getTime() + 30 * 1000);
-    var nextDay = (now.getDay() == 0) ? 6 : now.getDay() - 1;
+    var nextDay = next.getDay();
     var nextHour = next.getHours();
     var nextMinute = ('00' + next.getMinutes()).slice(-2);
 

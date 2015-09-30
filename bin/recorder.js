@@ -80,7 +80,7 @@ var encode = function (flvFilePath, callback) {
 // 録画
 exports.record = function (streamUrl, length, startAt, callback) {
     var datetime = formatDate(startAt, 'YYYYMMDD_hhmmss');
-    var flvFilePath = path.resolve(datetime + 'flv');
+    var flvFilePath = path.resolve(datetime + '.flv');
     
     // rtmpdump呼び出し
     print('recode', 'file', flvFilePath);
