@@ -30,7 +30,7 @@ var timetable;
 //  video,audio,thumbnail: エンコード後のファイル名
 
 // 番組表取得
-var getTimeTable = function (callback) {
+var updateTimeTable = function (callback) {
     request(timetableUrl, function (timetableError, timetableResponse, timetableBody) {
         if (!timetableError && timetableResponse.statusCode == 200) {
             // 元データのtrタグがおかしいので修正
@@ -148,10 +148,22 @@ var getStreamUrl = function (callback) {
     });
 }
 
+// 番組表参照
+exports.getTimetable = function () {
+    return timetable;
+}
+
+// 番組表強制更新
+exports.refreshTimetable = function (callback) {
+    updateTimeTable(function (newTimetable) {
+        timetable = newTimetable;
+        callback(newTimetable);
+    });
+}
 
 // スケジューラ起動
 exports.start = function (callback) {
-    getTimeTable(function (nowTimetable) {
+    updateTimeTable(function (nowTimetable) {
         // 番組表が取得できたらジョブ登録
         timetable = nowTimetable;
             
@@ -160,7 +172,7 @@ exports.start = function (callback) {
         // [4] 即時開始オン
         // [5] タイムゾーン指定
         updateTimetableJob = new CronJob('0 0 5 * * 1', function () {
-            getTimeTable(function (newTimetable) {
+            updateTimeTable(function (newTimetable) {
                 timetable = newTimetable;
             });
         }, null, true, timezone);
