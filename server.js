@@ -1,8 +1,8 @@
 var fs = require('fs');
 var path = require('path');
+
+// 超！A&G用スケジューラ
 var scheduler = require('./bin/schedule');
-var express = require('express');
-var app = express();
 
 scheduler.start(function (programInfo) {
     // 番組名のディレクトリをつくる
@@ -25,9 +25,16 @@ scheduler.start(function (programInfo) {
     fs.renameSync(programInfo.thumbnail, outputDir + path.sep + thumbnail);
 });
 
+// Webインターフェース
+var express = require('express');
+var app = express();
+
+app.use(express.static(__dirname + '/public'));
+
 app.get('/', function (req, res) {
     res.send(JSON.stringify(scheduler.getTimetable(), null, '    '));
 });
+
 app.get('/refresh', function (req, res) {
     scheduler.refreshTimetable(function () {
         res.send('refresh ok');
