@@ -1,25 +1,67 @@
-mochaがイケてない
+mocha
 ====
 
-どの辺がイケてないか
+超!A&Gを保存して好きなときに見られるようにする
+
+Require
 ----
 
-* 録画予約がjsonベタ書き(webインターフェース作ってない)
-* 時間通りにrtmpdumpとffmpegを呼び出すのが仕事の8割
-* 録画終了即エンコードしてる(見ない番組も処理されてる)
-* 古いファイルの削除がtmpwatch頼み
-* "25:00"を"翌日1時"と認識する処理に不安がある
-* 音声のみの番組が多いのに、動画で観るしかない(音声のみモードが欲しい)
+* node.js
+ + 最新版で動作確認しています
+* rtmpdump
+```
+sudo yum install openssl-devel
+wget http://rtmpdump.mplayerhq.hu/download/rtmpdump-2.3.tgz
+tar xzf rtmpdump-2.3.tgz
+cd rtmpdump-2.3
+make SYS=posix
+sudo cp -p rtmpdump rtmpgw rtmpsrv rtmpsuck /usr/local/bin
+```
+* ffmpeg
+ + x264とfdk_aacが必要
+ + CentOSの場合の手順は[こちら](http://nibral.github.io/ffmpeg-on-centos/)
 
-どうするか
+WebAccess
 ----
 
-* 超A&Gに依存する部分と、動画配信機能として汎用に使える部分を分離する(microservice化？)
-* ffmpegでrtmpを入力にできることがわかったので、rtmpdumpは使わない
-* 「指定した番組を録画してエンコード」ではなく、「全部録画しておいて観たいところをエンコード」する
+ポート80でアクセスする場合、nginxでリバースプロキシを立てる
 
-するべきこと
+下記を`/etc/nginx/conf.d/mocha.conf`として保存
+
+```
+upstream mocha {
+  server localhost:3000;
+}
+
+server {
+  listen      80;
+  server_name mocha.yourdomain.com;
+  charset     UTF-8;
+
+  root        /path/to/mocha;
+
+  # BASIC認証を掛けるときはコメントアウトを外す
+  #auth_basic           "Login message";
+  #auth_basic_user_file /path/to/.htpasswd;
+
+  location / {
+    proxy_redirect                      off;
+    proxy_set_header Host               $host;
+    proxy_set_header X-Real-IP          $remote_addr;
+    proxy_set_header X-Forwarded-Host   $host;
+    proxy_set_header X-Forwarded-Server $host;
+    proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
+    proxy_pass                          http://mocha/;
+  }
+}
+```
+
+License
 ----
-* ~~A&G公式番組表のHTMLをパースして、放送時間と番組名と演者を取得する~~ 済
-* A&G部と配信部の間のインターフェースを考える(ファイル名？DB？RESTAPI？)
+
+(c) 2015 nibral
+
+Released under MIT License.
+
+[http://opensource.org/licenses/mit-license.php](http://opensource.org/licenses/mit-license.php)
 
