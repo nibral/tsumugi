@@ -1,4 +1,4 @@
-mocha
+tsumugi
 ====
 
 超!A&Gを保存して好きなときに見られるようにする
@@ -13,7 +13,6 @@ Require
 ----
 
 * node.js
- + 最新版で動作確認しています
 * rtmpdump
 ```
 sudo yum install openssl-devel
@@ -24,27 +23,27 @@ make SYS=posix
 sudo cp -p rtmpdump rtmpgw rtmpsrv rtmpsuck /usr/local/bin
 ```
 * ffmpeg
- + x264とfdk_aacが必要
+ + x264とfdk_aacを使ってるので自前でビルドしてください
  + CentOSの場合の手順は[こちら](http://nibral.github.io/ffmpeg-on-centos/)
 
 WebAccess
 ----
 
-ポート80でアクセスする場合、nginxでリバースプロキシを立てる
+ポート80でアクセスする場合、nginxでリバースプロキシを立てるとよい
 
-下記を`/etc/nginx/conf.d/mocha.conf`として保存
+設定ファイルの例
 
 ```
-upstream mocha {
+upstream tsumugi {
   server localhost:3000;
 }
 
 server {
   listen      80;
-  server_name mocha.yourdomain.com;
+  server_name tsumugi.yourdomain.com;
   charset     UTF-8;
 
-  root        /path/to/mocha;
+  root        /path/to/tsumugi;
 
   # BASIC認証を掛けるときはコメントアウトを外す
   #auth_basic           "Login message";
@@ -57,7 +56,7 @@ server {
     proxy_set_header X-Forwarded-Host   $host;
     proxy_set_header X-Forwarded-Server $host;
     proxy_set_header X-Forwarded-For    $proxy_add_x_forwarded_for;
-    proxy_pass                          http://mocha/;
+    proxy_pass                          http://tsumugi/;
   }
 }
 ```
