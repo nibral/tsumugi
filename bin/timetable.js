@@ -5,9 +5,10 @@ var cheerio = require('cheerio');
 var parseString = require('xml2js').parseString;
 var programs;
 
+const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const timetableUrl = 'http://www.agqr.jp/timetable/streaming.php';
 const streamListUrl = 'http://www.uniqueradio.jp/agplayerf/getfmsListHD.php';
-const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const streamInfoUrl = 'http://www.uniqueradio.jp/aandg';
 
 // 番組表の形式
 //  [day]{ time: { title, rp } }
@@ -27,17 +28,17 @@ const dayName = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 //  video,audio,thumbnail: エンコード後のファイル名
 
 // 番組表更新(非同期)
-exports.update = function (callback) {
-    request(timetableUrl, function (timetableError, timetableResponse, timetableBody) {
-        if (!timetableError && timetableResponse.statusCode == 200) {
+exports.updatePrograms = function (callback) {
+    request(timetableUrl, function (error, response, body) {
+        if (!error && response.statusCode == 200) {
             // 元データのtrタグがおかしいので修正
             // 10時:tr開始タグが1つ余計
-            timetableBody = timetableBody.replace(
+            body = body.replace(
                 /<\/tr>[\s]*<tr>[\s]*<tr>/g,
                 '</tr>\n<tr>'
                 );
             // 20時と21時:tr開始タグが足りない
-            timetableBody = timetableBody.replace(
+            body = body.replace(
                 /<\/tr>[\s]*<th class="time3" rowspan="2">2/g,
                 '</tr>\n<tr>\n<th class="time3" rowspan="2">2'
                 );
@@ -51,7 +52,7 @@ exports.update = function (callback) {
             let rowskip = [0, 0, 0, 0, 0, 0, 0];    
 
             // 30分ごとの枠
-            let $ = cheerio.load(timetableBody);
+            let $ = cheerio.load(body);
             $('.schedule-ag > table > tbody > tr').each(function () {
                 // 各曜日
                 let day = 1;
@@ -97,11 +98,9 @@ exports.update = function (callback) {
             });
 
             // コールバックに番組表を渡す
-            if (typeof callback == 'function') {
-                callback(programs);
-            }
+            callback(programs);
         } else {
-            throw Error('Failed to get timetable: ' + timetableResponse.statusCode);
+            throw Error('Failed to get timetable: ' + response.statusCode);
         }
     });
 }
@@ -112,7 +111,11 @@ exports.getPrograms = function () {
 }
 
 // 番組情報取得
-exports.getProgramInfo = function (timeOffset = 0) {
+exports.getProgramInfo = function (timeOffset) {
+    if (!timeOffset) {
+        timeOffset = 0;
+    }
+    
     // 番組の開始時間を計算
     let now = new Date();
     let next = new Date(now.getTime() + timeOffset * 1000);
@@ -132,7 +135,7 @@ exports.getProgramInfo = function (timeOffset = 0) {
 }
 
 // 配信URL取得
-exports.getStreamUrl = function () {
+exports.getStreamUrl = function (callback) {
     // 配信URL取得
     request(streamListUrl, function (urlError, urlResponse, urlBody) {
         if (!urlError && urlResponse.statusCode == 200) {
@@ -141,16 +144,37 @@ exports.getStreamUrl = function () {
                 if (parseError) {
                     throw Error(parseError);
                 }
-                // 先頭のURLを返す
+                // コールバックに先頭のURLを渡す
                 let serverinfo = parseResult.ag.serverlist[0].serverinfo[0];
                 let server = serverinfo.server[0].match(/^.*(rtmp.*)$/)[1];
                 let app = serverinfo.app[0];
                 let stream = serverinfo.stream[0];
                 let streamUrl = server + '/' + app + '/' + stream;
-                return streamUrl;
+                callback(streamUrl);
             });
         } else {
             throw Error('Failed to get stream url(' + urlResponse.statusCode + ')');
+        }
+    });
+}
+
+// 配信画面から情報取得
+exports.getStreamingProgramInfo = function (callback) {
+    request(streamInfoUrl, function (error, response, body) {
+        if (!error && response.statusCode == 200) {
+            // urlから得られたコードを評価して変数に代入
+            // 変数名は変えないこと
+            let Program_name;
+            let Program_personality;
+            eval(body);
+            Program_name = decodeURIComponent(Program_name);
+            Program_personality = decodeURIComponent(Program_personality);
+            callback({
+                title: Program_name,
+                rp: Program_personality
+            });
+        } else {
+            throw Error('Faild to get stream info(' + response.statusCode + ')');
         }
     });
 }

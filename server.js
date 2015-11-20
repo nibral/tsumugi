@@ -1,7 +1,7 @@
 'use strict';
 
 var timetable = require('./bin/Timetable');
-timetable.update();
+timetable.updatePrograms();
 
 var express = require('express');
 var app = express();
@@ -11,7 +11,11 @@ app.get('/', function (req, res) {
 });
 
 app.get('/next', function (req, res) {
-    res.json(timetable.getProgramInfo());
+    try {
+        res.json(timetable.getProgramInfo());
+    } catch (error) {
+        res.send(error.message);
+    }
 });
 
 var server = app.listen(3000, function () {
