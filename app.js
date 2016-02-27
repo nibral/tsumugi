@@ -25,6 +25,14 @@ app.get('/next', (request, response) => {
         response.send(error.message);
     }
 });
+app.get('/now', (request, response) => {
+    response.setHeader('Content-Type', 'text/plain');
+    agqr.getStreamingProgramInfo().then((info) => {
+        response.send(JSON.stringify(info, null, '  '));
+    }).catch((error) => {
+        response.send(error);
+    });;
+});
 
 // サーバ起動
 const listenPort = process.env.PORT || 3000;
