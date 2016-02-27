@@ -1,8 +1,11 @@
 # backup file
 *~
 
-# node modules
+# npm
 node_modules
+
+# typings
+typings
 
 # media files
 *.mp4
