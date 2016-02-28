@@ -10,7 +10,6 @@ agqr.downloadAndParseTimetable().then((response) => {
     timetable = response;
 }).catch((error) => {
     console.log(error);
-    process.exit(1);
 });
 
 // ルーティング
@@ -18,20 +17,21 @@ app.get('/', (request, response) => {
     response.setHeader('Content-Type', 'text/plain');
     response.send(JSON.stringify(timetable, null, '  '));
 });
-app.get('/next', (request, response) => {
-    try {
-        response.json(agqr.getProgramInfo());
-    } catch (error) {
-        response.send(error.message);
-    }
-});
 app.get('/now', (request, response) => {
+    response.setHeader('Content-Type', 'text/plain');
+    agqr.getProgramInfo(timetable).then((info) => {
+        response.send(JSON.stringify(info, null, '  '));
+    }).catch((error) => {
+        response.send(error);
+    });
+});
+app.get('/stream', (request, response) => {
     response.setHeader('Content-Type', 'text/plain');
     agqr.getStreamingProgramInfo().then((info) => {
         response.send(JSON.stringify(info, null, '  '));
     }).catch((error) => {
         response.send(error);
-    });;
+    });
 });
 
 // サーバ起動
