@@ -43,18 +43,18 @@ app.listen(listenPort, () => {
 // test
 const co = require('co');
 const sleep = require('sleep-promise');
-const Recorder = require('./lib/recorder');
+const Program = require('./lib/program');
 co(function* () {
     const streamUrl = yield agqr.getStreamUrl();
-    const recJob = new Recorder(streamUrl);
-    yield recJob.start();
+    const nowProgram = new Program();
+    yield nowProgram.startRecording(streamUrl);
     yield sleep(30 * 1000);
-    yield recJob.stop();
-    yield recJob.encode();
-    return recJob.info;
+    yield nowProgram.stopRecording();
+    yield nowProgram.encodeRecordedFile();
+    yield nowProgram.deleteRecordedFile();
+    return nowProgram.info;
 }).then((result) => {
     console.log(result);
 }).catch((error) => {
     console.log(error);
 });
-
