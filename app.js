@@ -39,19 +39,3 @@ const listenPort = process.env.PORT || 3000;
 app.listen(listenPort, () => {
     console.log('start listening on port %d', listenPort);
 });
-
-const sleep = require('sleep-promise');
-const Recorder = require('./lib/recorder');
-let recJob = null;
-agqr.getStreamUrl().then((url) => {
-    recJob = new Recorder(url);
-    return recJob.start();
-}).then(() => {
-    return sleep(10 * 1000);
-}).then(() => {
-    return recJob.stop(false);
-}).then(() => {
-    console.log('rec ok');    
-}).catch((error) => {
-    console.log(error);
-});
