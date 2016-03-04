@@ -39,3 +39,22 @@ const listenPort = process.env.PORT || 3000;
 app.listen(listenPort, () => {
     console.log('start listening on port %d', listenPort);
 });
+
+// test
+const co = require('co');
+const sleep = require('sleep-promise');
+const Recorder = require('./lib/recorder');
+co(function* () {
+    const streamUrl = yield agqr.getStreamUrl();
+    const recJob = new Recorder(streamUrl);
+    yield recJob.start();
+    yield sleep(30 * 1000);
+    yield recJob.stop();
+    yield recJob.encode();
+    return recJob.info;
+}).then((result) => {
+    console.log(result);
+}).catch((error) => {
+    console.log(error);
+});
+
