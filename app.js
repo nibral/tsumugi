@@ -33,28 +33,30 @@ app.get('/stream', (request, response) => {
         response.send(error);
     });
 });
+app.get('/rec', (request, response) => {
+    response.send('Recording request was accepted. Check your console.');
+    
+    const co = require('co');
+    const sleep = require('sleep-promise');
+    const Program = require('./lib/program');
+    co(function* () {
+        const streamUrl = yield agqr.getStreamUrl();
+        const nowProgram = new Program();
+        yield nowProgram.startRecording(streamUrl);
+        yield sleep(30 * 1000);
+        yield nowProgram.stopRecording();
+        yield nowProgram.encodeRecordedFile();
+        yield nowProgram.deleteRecordedFile();
+        return nowProgram.info;
+    }).then((result) => {
+        console.log(result);
+    }).catch((error) => {
+        console.log(error);
+    });
+});
 
 // サーバ起動
 const listenPort = process.env.PORT || 3000;
 app.listen(listenPort, () => {
     console.log('start listening on port %d', listenPort);
-});
-
-// test
-const co = require('co');
-const sleep = require('sleep-promise');
-const Program = require('./lib/program');
-co(function* () {
-    const streamUrl = yield agqr.getStreamUrl();
-    const nowProgram = new Program();
-    yield nowProgram.startRecording(streamUrl);
-    yield sleep(30 * 1000);
-    yield nowProgram.stopRecording();
-    yield nowProgram.encodeRecordedFile();
-    yield nowProgram.deleteRecordedFile();
-    return nowProgram.info;
-}).then((result) => {
-    console.log(result);
-}).catch((error) => {
-    console.log(error);
 });
