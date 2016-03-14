@@ -35,7 +35,7 @@ app.get('/stream', (request, response) => {
 });
 app.get('/rec', (request, response) => {
     response.send('Recording request was accepted. Check your console.');
-    
+
     const co = require('co');
     const sleep = require('sleep-promise');
     const Program = require('./lib/program');
