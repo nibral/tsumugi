@@ -19,7 +19,7 @@ app.get('/', (request, response) => {
 });
 app.get('/now', (request, response) => {
     response.setHeader('Content-Type', 'text/plain');
-    agqr.getProgramInfo(timetable).then((info) => {
+    agqr.getNowProgramFromTimetable(timetable).then((info) => {
         response.send(JSON.stringify(info, null, '  '));
     }).catch((error) => {
         response.send(error);
