@@ -54,6 +54,19 @@ app.get('/rec', (request, response) => {
         console.log(error);
     });
 });
+app.get('/check', (request, response) => {
+    response.setHeader('Content-Type', 'text/plain');
+    const co = require('co');
+    co(function* () {
+        const fromTable = yield agqr.getNowProgramFromTimetable(timetable);
+        const fromStream = yield agqr.getStreamingProgramInfo();
+        const isMatch =
+            agqr.isScheduledProgram(fromTable.title, fromStream.title);
+        response.send(fromTable.title + ',' + fromStream.title + ',' + isMatch);
+    }).catch((error) => {
+        response.send(error);
+    });
+});
 
 // サーバ起動
 const listenPort = process.env.PORT || 3000;
