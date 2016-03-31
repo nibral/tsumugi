@@ -68,6 +68,10 @@ app.get('/check', (request, response) => {
     });
 });
 
+// 録画スケジューラ起動
+const scheduler = require('./lib/scheduler');
+scheduler.start();
+
 // サーバ起動
 const listenPort = process.env.PORT || 3000;
 app.listen(listenPort, () => {
