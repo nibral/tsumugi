@@ -5,21 +5,21 @@ const app = express();
 
 // 超!A&G番組表取得
 const agqr = require('./lib/agqr');
-let timetable = null;
-agqr.downloadAndParseTimetable().then((response) => {
-    timetable = response;
-}).catch((error) => {
-    console.log(error);
-});
 
 // ルーティング
 app.get('/', (request, response) => {
     response.setHeader('Content-Type', 'text/plain');
-    response.send(JSON.stringify(timetable, null, '  '));
+    agqr.downloadAndParseTimetable().then((timetable) => {
+        response.send(JSON.stringify(timetable, null, '  '));
+    }).catch((error) => {
+        response.send(error);
+    });
 });
 app.get('/now', (request, response) => {
     response.setHeader('Content-Type', 'text/plain');
-    agqr.getNowProgramFromTimetable(timetable).then((info) => {
+    agqr.downloadAndParseTimetable().then(() => {
+        return agqr.getNowProgramFromTimetable();
+    }).then((info) => {
         response.send(JSON.stringify(info, null, '  '));
     }).catch((error) => {
         response.send(error);
@@ -58,11 +58,12 @@ app.get('/check', (request, response) => {
     response.setHeader('Content-Type', 'text/plain');
     const co = require('co');
     co(function* () {
-        const fromTable = yield agqr.getNowProgramFromTimetable(timetable);
+        yield agqr.downloadAndParseTimetable();
+        const fromTable = yield agqr.getNowProgramFromTimetable();
         const fromStream = yield agqr.getStreamingProgramInfo();
         const isMatch =
-            agqr.isScheduledProgram(fromTable.title, fromStream.title);
-        response.send(fromTable.title + ',' + fromStream.title + ',' + isMatch);
+            agqr.isScheduledProgram(fromTable.now.title, fromStream.title);
+        response.send(fromTable.now.title + ',' + fromStream.title + ',' + isMatch);
     }).catch((error) => {
         response.send(error);
     });
