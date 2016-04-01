@@ -18,8 +18,8 @@ co(function* () {
 
     // 放送中番組取得
     console.log('getNowProgramFromTimetable()');
-    const programs = agqr.getProgramInfoFromTimetable();
-    console.log(programs);
+    const nowProgram = agqr.getProgramInfoFromTimetable();
+    console.log(nowProgram);
 
     // 配信画面取得
     console.log('getStreamingProgramInfo()');
@@ -33,12 +33,12 @@ co(function* () {
 
     // 特番判定
     console.log('isScheduledProgram()');
-    if (programs.now && streamProgram) {
+    if (nowProgram && streamProgram) {
         const isScheduled =
-            agqr.isScheduledProgram(programs.now.title, streamProgram.title);
+            agqr.isScheduledProgram(nowProgram.title, streamProgram.title);
         console.log(isScheduled);
     } else {
-        console.log(programs.now);
+        console.log(nowProgram.now);
         console.log(streamProgram);
     }
 
