@@ -1,3 +1,5 @@
+**このプロジェクトはもう使われていません THIS PROJECT IS NO LONGER MAINTAINED**
+
 tsumugi
 ====
 
